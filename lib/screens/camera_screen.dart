@@ -16,8 +16,38 @@ class _CameraScreenState extends State<CameraScreen> {
 
   // 📝 Auto Scan Function (FIXED)
   Future<void> startScan() async {
-    // 1. Permission
-    if (!await Permission.camera.request().isGranted) return;
+    // 1. Permission Check
+    var status = await Permission.camera.status;
+    if (status.isDenied) {
+      status = await Permission.camera.request();
+    }
+
+    if (!status.isGranted && mounted) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text("Camera Permission Required"),
+              content: const Text(
+                "This app needs camera access to scan documents. Please enable it in Settings.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Open Settings"),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
 
     try {
       setState(() => isScanning = true);
